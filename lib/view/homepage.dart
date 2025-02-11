@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../controller/itemcontroller.dart';
 import 'auctionproductspage.dart';
 
@@ -104,7 +105,10 @@ class _HomePageState extends State<HomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Manage Products'),
+        title: Text(
+          'Manage Products',
+          style: GoogleFonts.raleway(fontWeight: FontWeight.bold),
+        ),
         actions: [
           IconButton(
             icon: Icon(Icons.gavel),
@@ -120,50 +124,122 @@ class _HomePageState extends State<HomePage> {
         },
         child: Icon(Icons.add),
       ),
-      body: GetBuilder<ItemController>(
-        builder: (_) {
-          return ListView.builder(
-            itemCount: itemController.itemList.length,
-            itemBuilder: (context, index) {
-              final item = itemController.itemList[index];
-              return ListTile(
-                title: Text('Name: ${item['name']}'),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                        'Category: ${item['category']}'),
-                    Text(
-                        'Price: \$${item['price']}'),
-                  ],
-                ),
-                trailing: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    IconButton(
-                      icon: Icon(Icons.edit),
-                      onPressed: () {
-                        showCustomDialog(context, index: index);
-                      },
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: GetBuilder<ItemController>(
+          builder: (_) {
+            return ListView.separated(
+              separatorBuilder: (context, index) {
+                return SizedBox(
+                  height: 10,
+                );
+              },
+              itemCount: itemController.itemList.length,
+              itemBuilder: (context, index) {
+                final item = itemController.itemList[index];
+                return Container(
+                  height: 100,
+                  width: double.infinity,
+                  color: Colors.grey[200],
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Row(
+                      children: [
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Name: ${item['name']}',
+                              style: GoogleFonts.raleway(
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              'Category: ${item['category']}',
+                              style: GoogleFonts.raleway(
+                                  fontWeight: FontWeight.bold),
+                            ),
+                            SizedBox(
+                              height: 10,
+                            ),
+                            Text(
+                              'Price: \$${item['price']}',
+                              style: GoogleFonts.raleway(
+                                  fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        Spacer(),
+                        IconButton(
+                          icon: Icon(Icons.edit),
+                          onPressed: () {
+                            showCustomDialog(context, index: index);
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () {
+                            deleteItem(index);
+                          },
+                        ),
+                        IconButton(
+                          icon: Icon(Icons.bookmark_add),
+                          onPressed: () {
+                            markForAuction(index);
+                          },
+                        ),
+                      ],
                     ),
-                    IconButton(
-                      icon: Icon(Icons.delete),
-                      onPressed: () {
-                        deleteItem(index);
-                      },
-                    ),
-                    IconButton(
-                      icon: Icon(Icons.bookmark_add),
-                      onPressed: () {
-                        markForAuction(index);
-                      },
-                    ),
-                  ],
-                ),
-              );
-            },
-          );
-        },
+                  ),
+                );
+                //   ListTile(
+                //   title: Text(
+                //     'Name: ${item['name']}',
+                //     style: GoogleFonts.raleway(fontWeight: FontWeight.bold),
+                //   ),
+                //   subtitle: Column(
+                //     crossAxisAlignment: CrossAxisAlignment.start,
+                //     children: [
+                //       Text(
+                //         'Category: ${item['category']}',
+                //         style: GoogleFonts.raleway(fontWeight: FontWeight.bold),
+                //       ),
+                //       Text(
+                //         'Price: \$${item['price']}',
+                //         style: GoogleFonts.raleway(fontWeight: FontWeight.bold),
+                //       ),
+                //     ],
+                //   ),
+                //   trailing: Row(
+                //     mainAxisSize: MainAxisSize.min,
+                //     children: [
+                //       IconButton(
+                //         icon: Icon(Icons.edit),
+                //         onPressed: () {
+                //           showCustomDialog(context, index: index);
+                //         },
+                //       ),
+                //       IconButton(
+                //         icon: Icon(Icons.delete),
+                //         onPressed: () {
+                //           deleteItem(index);
+                //         },
+                //       ),
+                //       IconButton(
+                //         icon: Icon(Icons.bookmark_add),
+                //         onPressed: () {
+                //           markForAuction(index);
+                //         },
+                //       ),
+                //     ],
+                //   ),
+                // );
+              },
+            );
+          },
+        ),
       ),
     );
   }
