@@ -1,56 +1,94 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../controller/itemcontroller.dart';
-import 'auctionproductspage.dart';
 
-class HomePage extends StatefulWidget {
-  const HomePage({super.key});
+class HomePage extends StatelessWidget {
+  final ItemController controller = Get.put(ItemController());
 
   @override
-  State<HomePage> createState() => _HomePageState();
-}
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: Text('Items List'),
+      ),
+      body: Column(
+        children: [
+          ElevatedButton(
+            onPressed: () {
+              _showAddItemDialog(context);
+            },
+            child: Text('Add Item'),
+          ),
+          Expanded(
+            child: Obx(() {
+              return ListView.builder(
+                itemCount: controller.itemList.length,
+                itemBuilder: (context, index) {
+                  var item = controller.itemList[index];
+                  return ListTile(
+                    title: Text(item['name']),
+                    subtitle: Text(
+                        'Category: ${item['category']} - Price: ${item['price']}'),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Edit Button
+                        IconButton(
+                          icon: Icon(Icons.edit),
+                          onPressed: () {
+                            _showEditItemDialog(context, index);
+                          },
+                        ),
+                        // Delete Button
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          onPressed: () {
+                            controller.deleteItem(index);
+                          },
+                        ),
+                        // Read Button
+                        IconButton(
+                          icon: Icon(Icons.visibility),
+                          onPressed: () {
+                            Get.toNamed('/auction', arguments: item);
+                          },
+                        ),
+                      ],
+                    ),
+                  );
+                },
+              );
+            }),
+          ),
+        ],
+      ),
+    );
+  }
 
-class _HomePageState extends State<HomePage> {
-  final ItemController itemController = Get.put(ItemController());
-  final TextEditingController nameController = TextEditingController();
-  final TextEditingController categoryController = TextEditingController();
-  final TextEditingController priceController = TextEditingController();
-  int? editingIndex;
-
-  void showCustomDialog(BuildContext context, {int? index}) {
-    if (index != null) {
-      final item = itemController.itemList[index];
-      nameController.text = item['name']!;
-      categoryController.text = item['category']!;
-      priceController.text = item['price']!;
-    } else {
-      nameController.clear();
-      categoryController.clear();
-      priceController.clear();
-    }
+  void _showAddItemDialog(BuildContext context) {
+    TextEditingController nameController = TextEditingController();
+    TextEditingController categoryController = TextEditingController();
+    TextEditingController priceController = TextEditingController();
 
     showDialog(
       context: context,
-      builder: (BuildContext context) {
+      builder: (context) {
         return AlertDialog(
-          title: Text(index == null ? 'Add New Item' : 'Edit Item'),
+          title: Text('Add New Item'),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextFormField(
+              TextField(
                 controller: nameController,
-                decoration: InputDecoration(labelText: 'Enter Name'),
-                keyboardType: TextInputType.text,
+                decoration: InputDecoration(labelText: 'Item Name'),
               ),
-              TextFormField(
+              TextField(
                 controller: categoryController,
-                decoration: InputDecoration(labelText: 'Enter Category'),
-                keyboardType: TextInputType.text,
+                decoration: InputDecoration(labelText: 'Category'),
               ),
-              TextFormField(
+              TextField(
                 controller: priceController,
-                decoration: InputDecoration(labelText: 'Enter Price'),
+                decoration: InputDecoration(labelText: 'Price'),
                 keyboardType: TextInputType.number,
               ),
             ],
@@ -58,34 +96,26 @@ class _HomePageState extends State<HomePage> {
           actions: [
             TextButton(
               onPressed: () {
-                if (index == null) {
-                  itemController.addItem(
-                    nameController.text,
-                    categoryController.text,
-                    priceController.text,
-                  );
-                } else {
-                  itemController.updateItem(
-                    index,
-                    nameController.text,
-                    categoryController.text,
-                    priceController.text,
-                  );
-                }
-
-                nameController.clear();
-                categoryController.clear();
-                priceController.clear();
-
-                Navigator.of(context).pop();
-              },
-              child: Text(index == null ? 'Add' : 'Update'),
-            ),
-            TextButton(
-              onPressed: () {
                 Navigator.of(context).pop();
               },
               child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                String name = nameController.text;
+                String category = categoryController.text;
+                String price = priceController.text;
+
+                if (name.isNotEmpty &&
+                    category.isNotEmpty &&
+                    price.isNotEmpty) {
+                  controller.addItem(name, category, price);
+                  Navigator.of(context).pop();
+                } else {
+                  Get.snackbar('Error', 'Please fill in all fields');
+                }
+              },
+              child: Text('Add'),
             ),
           ],
         );
@@ -93,154 +123,64 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  void deleteItem(int index) {
-    itemController.deleteItem(index);
-  }
+  void _showEditItemDialog(BuildContext context, int index) {
+    TextEditingController nameController =
+        TextEditingController(text: controller.itemList[index]['name']);
+    TextEditingController categoryController =
+        TextEditingController(text: controller.itemList[index]['category']);
+    TextEditingController priceController =
+        TextEditingController(text: controller.itemList[index]['price']);
 
-  void markForAuction(int index) {
-    itemController.markForAuction(index);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          'Manage Products',
-          style: GoogleFonts.raleway(fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.gavel),
-            onPressed: () {
-              Get.to(AuctionProductsPage());
-            },
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Edit Item'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: InputDecoration(labelText: 'Item Name'),
+              ),
+              TextField(
+                controller: categoryController,
+                decoration: InputDecoration(labelText: 'Category'),
+              ),
+              TextField(
+                controller: priceController,
+                decoration: InputDecoration(labelText: 'Price'),
+                keyboardType: TextInputType.number,
+              ),
+            ],
           ),
-        ],
-      ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          showCustomDialog(context);
-        },
-        child: Icon(Icons.add),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: GetBuilder<ItemController>(
-          builder: (_) {
-            return ListView.separated(
-              separatorBuilder: (context, index) {
-                return SizedBox(
-                  height: 10,
-                );
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
               },
-              itemCount: itemController.itemList.length,
-              itemBuilder: (context, index) {
-                final item = itemController.itemList[index];
-                return Container(
-                  height: 100,
-                  width: double.infinity,
-                  color: Colors.grey[200],
-                  child: Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Row(
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Name: ${item['name']}',
-                              style: GoogleFonts.raleway(
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Text(
-                              'Category: ${item['category']}',
-                              style: GoogleFonts.raleway(
-                                  fontWeight: FontWeight.bold),
-                            ),
-                            SizedBox(
-                              height: 10,
-                            ),
-                            Text(
-                              'Price: \$${item['price']}',
-                              style: GoogleFonts.raleway(
-                                  fontWeight: FontWeight.bold),
-                            ),
-                          ],
-                        ),
-                        Spacer(),
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          onPressed: () {
-                            showCustomDialog(context, index: index);
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          onPressed: () {
-                            deleteItem(index);
-                          },
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.bookmark_add),
-                          onPressed: () {
-                            markForAuction(index);
-                          },
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-                //   ListTile(
-                //   title: Text(
-                //     'Name: ${item['name']}',
-                //     style: GoogleFonts.raleway(fontWeight: FontWeight.bold),
-                //   ),
-                //   subtitle: Column(
-                //     crossAxisAlignment: CrossAxisAlignment.start,
-                //     children: [
-                //       Text(
-                //         'Category: ${item['category']}',
-                //         style: GoogleFonts.raleway(fontWeight: FontWeight.bold),
-                //       ),
-                //       Text(
-                //         'Price: \$${item['price']}',
-                //         style: GoogleFonts.raleway(fontWeight: FontWeight.bold),
-                //       ),
-                //     ],
-                //   ),
-                //   trailing: Row(
-                //     mainAxisSize: MainAxisSize.min,
-                //     children: [
-                //       IconButton(
-                //         icon: Icon(Icons.edit),
-                //         onPressed: () {
-                //           showCustomDialog(context, index: index);
-                //         },
-                //       ),
-                //       IconButton(
-                //         icon: Icon(Icons.delete),
-                //         onPressed: () {
-                //           deleteItem(index);
-                //         },
-                //       ),
-                //       IconButton(
-                //         icon: Icon(Icons.bookmark_add),
-                //         onPressed: () {
-                //           markForAuction(index);
-                //         },
-                //       ),
-                //     ],
-                //   ),
-                // );
+              child: Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () {
+                String name = nameController.text;
+                String category = categoryController.text;
+                String price = priceController.text;
+
+                if (name.isNotEmpty &&
+                    category.isNotEmpty &&
+                    price.isNotEmpty) {
+                  controller.updateItem(index, name, category, price);
+                  Navigator.of(context).pop();
+                } else {
+                  Get.snackbar('Error', 'Please fill in all fields');
+                }
               },
-            );
-          },
-        ),
-      ),
+              child: Text('Save'),
+            ),
+          ],
+        );
+      },
     );
   }
 }
